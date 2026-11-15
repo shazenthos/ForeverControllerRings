@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.1
+- Fix layout: the "Kinds and order" button no longer sits on top of the mapping status, and its panel opens beside the main window instead of over it. Both windows stay on screen.
+
 ## 0.5.0
 - New "Kinds and order" panel (a button on each ring in the window): turn each kind of item on or off (Food, Drink, Potion, Bandage, Elixir / Flask, Scroll, Other; for quests, items you use and items that start a quest) and put the kinds in the order you like. The order is the order of the pages. Saved between sessions; if every kind is off the ring says so.
 

@@ -3,7 +3,7 @@
 -- compartment), Options > AddOns > Forever Controller Rings, or "/fcr".
 local _, FR = ...
 
-local WIDTH, ROW_H = 470, 74
+local WIDTH, ROW_H = 470, 94
 local win, rows, releaseBox, rumbleBox = nil, {}, nil, nil
 
 local function RefreshRow(row)
@@ -38,6 +38,7 @@ local function Build()
     win:SetSize(WIDTH, 70 + #FR.RINGS * ROW_H + 78)
     win:SetPoint("CENTER", UIParent, "CENTER", 0, 60)
     win:SetFrameStrata("DIALOG")
+    win:SetClampedToScreen(true)
     win:SetMovable(true)
     win:EnableMouse(true)
     win:RegisterForDrag("LeftButton")
@@ -79,7 +80,7 @@ local function Build()
         row.status:SetJustifyH("LEFT")
         row.kinds = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
         row.kinds:SetSize(120, 20)
-        row.kinds:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", 12, 0)
+        row.kinds:SetPoint("TOPLEFT", row.status, "BOTTOMLEFT", 0, -6) -- under the status, whatever its length
         row.kinds:SetText("Kinds and order")
         row.kinds:SetScript("OnClick", function() FR.OpenKinds(ringKey) end)
         row.clear = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")

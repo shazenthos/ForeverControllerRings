@@ -72,6 +72,7 @@ local function Build()
     panel:SetSize(PANEL_W, 200)
     panel:SetPoint("CENTER", UIParent, "CENTER", 300, 60)
     panel:SetFrameStrata("DIALOG")
+    panel:SetClampedToScreen(true)
     panel:SetMovable(true)
     panel:EnableMouse(true)
     panel:RegisterForDrag("LeftButton")
@@ -99,5 +100,13 @@ end
 function FR.OpenKinds(ringKey)
     Build()
     current = ringKey
+    -- beside the main window, not over it
+    local main = _G.ForeverControllerRingsWindow
+    panel:ClearAllPoints()
+    if main and main:IsShown() then
+        panel:SetPoint("TOPLEFT", main, "TOPRIGHT", 6, 0)
+    else
+        panel:SetPoint("CENTER", UIParent, "CENTER", 0, 60)
+    end
     if panel:IsShown() then Refresh() else panel:Show() end
 end
