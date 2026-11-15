@@ -461,21 +461,61 @@ end
 ---------------------------------------------------------------------------
 -- Drawing (insecure: icons, counts, cooldowns, the pick)
 ---------------------------------------------------------------------------
-local mask = ring:CreateMaskTexture()
-mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKANDWHITE", "CLAMPTOBLACKANDWHITE")
-mask:SetAllPoints(ring)
-local bg = ring:CreateTexture(nil, "BACKGROUND")
-bg:SetAllPoints(ring)
-bg:SetColorTexture(0, 0, 0, 0.55)
-bg:AddMaskTexture(mask)
+local MASK_TEX = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+local TEAL = { 0.25, 0.72, 0.79 }
+local GOLD = { 0.96, 0.78, 0.29 }
+local STEEL = { 0.45, 0.55, 0.62 }
+
+-- A round, flat-coloured disc (a colour texture under a circular mask).
+-- Layers inside one frame draw back to front by sublevel.
+local function Disc(parent, layer, sublevel, size, color, alpha, blend)
+    local tex = parent:CreateTexture(nil, layer, nil, sublevel)
+    tex:SetColorTexture(1, 1, 1, 1)
+    tex:SetVertexColor(color[1], color[2], color[3], alpha or 1)
+    tex:SetSize(size, size)
+    local mask = parent:CreateMaskTexture()
+    mask:SetTexture(MASK_TEX, "CLAMPTOBLACKANDWHITE", "CLAMPTOBLACKANDWHITE")
+    mask:SetAllPoints(tex)
+    tex:AddMaskTexture(mask)
+    if blend then tex:SetBlendMode(blend) end
+    return tex
+end
+
+-- Wheel body: a teal rim, a deep navy face, and a small inner hub.
+local rim = Disc(ring, "BACKGROUND", 0, SIZE, TEAL, 0.9)
+rim:SetPoint("CENTER")
+local face = Disc(ring, "BACKGROUND", 1, SIZE - 6, { 0.04, 0.06, 0.11 }, 0.88)
+face:SetPoint("CENTER")
+local hubRim = Disc(ring, "BACKGROUND", 2, 168, TEAL, 0.45)
+hubRim:SetPoint("CENTER")
+local hub = Disc(ring, "BACKGROUND", 3, 164, { 0.02, 0.03, 0.07 }, 0.9)
+hub:SetPoint("CENTER")
+
+-- Thin dividers between the eight slots.
+for index = 1, PER_PAGE do
+    local angle = SlotAngle(index) - math.pi / PER_PAGE
+    local line = ring.CreateLine and ring:CreateLine(nil, "BACKGROUND", nil, 4)
+    if line then
+        line:SetThickness(2)
+        line:SetColorTexture(TEAL[1], TEAL[2], TEAL[3], 0.28)
+        line:SetStartPoint("CENTER", ring, math.cos(angle) * 84, math.sin(angle) * 84)
+        line:SetEndPoint("CENTER", ring, math.cos(angle) * 190, math.sin(angle) * 190)
+    end
+end
+
+local FONT = GameFontHighlightSmall and GameFontHighlightSmall:GetFont() or "Fonts\\FRIZQT__.TTF"
 
 local title = ring:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-title:SetPoint("CENTER", ring, "CENTER", 0, 24)
-local selected = ring:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-selected:SetPoint("CENTER", ring, "CENTER", 0, -8)
-selected:SetWidth(200)
+title:SetPoint("CENTER", ring, "CENTER", 0, 26)
+title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+title:SetShadowOffset(1, -1)
+local selected = ring:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+selected:SetPoint("CENTER", ring, "CENTER", 0, -6)
+selected:SetWidth(150)
+selected:SetMaxLines(2)
+selected:SetShadowOffset(1, -1)
 local hint = ring:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-hint:SetPoint("CENTER", ring, "CENTER", 0, -36)
+hint:SetPoint("CENTER", ring, "CENTER", 0, -40)
 hint:SetText("A use   B close   D-pad pages")
 
 local slots = {}
@@ -485,13 +525,22 @@ for index = 1, PER_PAGE do
     slot:SetSize(ICON, ICON)
     slot:SetPoint("CENTER", ring, "CENTER", math.cos(angle) * RADIUS, math.sin(angle) * RADIUS)
     slot.dx, slot.dy = math.cos(angle), math.sin(angle)
+    -- a round rim (tinted by the item's quality) behind a round icon
+    slot.rim = Disc(slot, "BACKGROUND", 0, ICON + 6, STEEL, 1)
+    slot.rim:SetPoint("CENTER")
     slot.icon = slot:CreateTexture(nil, "ARTWORK")
     slot.icon:SetAllPoints()
+    slot.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    local iconMask = slot:CreateMaskTexture()
+    iconMask:SetTexture(MASK_TEX, "CLAMPTOBLACKANDWHITE", "CLAMPTOBLACKANDWHITE")
+    iconMask:SetAllPoints(slot.icon)
+    slot.icon:AddMaskTexture(iconMask)
     slot.count = slot:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-    slot.count:SetPoint("BOTTOMRIGHT", -2, 2)
+    slot.count:SetPoint("BOTTOMRIGHT", 4, -2)
     -- the item's name, under its icon (two lines at most)
     slot.name = slot:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    slot.name:SetPoint("TOP", slot, "BOTTOM", 0, -2)
+    slot.name:SetFont(FONT, 10, "OUTLINE")
+    slot.name:SetPoint("TOP", slot, "BOTTOM", 0, -5)
     slot.name:SetWidth(NAME_W)
     slot.name:SetMaxLines(2)
     slot.name:SetJustifyH("CENTER")
@@ -499,14 +548,29 @@ for index = 1, PER_PAGE do
     slot.cooldown = CreateFrame("Cooldown", nil, slot, "CooldownFrameTemplate")
     slot.cooldown:SetAllPoints()
     slot.cooldown:SetDrawEdge(false)
+    pcall(function() -- round swipe to match the round icon
+        slot.cooldown:SetSwipeTexture(MASK_TEX)
+        slot.cooldown:SetUseCircularEdge(true)
+    end)
     slots[index] = slot
 end
 
-local highlight = ring:CreateTexture(nil, "OVERLAY")
-highlight:SetTexture("Interface\\Buttons\\CheckButtonHilight")
-highlight:SetBlendMode("ADD")
-highlight:SetSize(ICON + 22, ICON + 22)
+-- A golden halo behind the picked slot (the slots, being child frames,
+-- draw above it, so it shows as a glowing rim).
+local highlight = Disc(ring, "BACKGROUND", 6, ICON + 18, GOLD, 0.95)
 highlight:Hide()
+
+-- Rim colour from the item's quality (steel for plain white and grey ones).
+local function QualityColor(itemID)
+    local ok, r, g, b = pcall(function()
+        local quality = C_Item.GetItemQualityByID(itemID)
+        if quality and quality >= 2 then
+            return C_Item.GetItemQualityColor(quality)
+        end
+    end)
+    if ok and r then return { r, g, b } end
+    return STEEL
+end
 
 local drawn
 
@@ -543,6 +607,8 @@ local function Draw(key)
         if entry then
             slot.icon:SetTexture(entry.icon)
             slot.name:SetText(entry.label or "")
+            local color = QualityColor(entry.itemID)
+            slot.rim:SetVertexColor(color[1], color[2], color[3], 1)
             slot:Show()
             UpdateSlot(slot, entry)
         else
@@ -573,6 +639,15 @@ driver:SetScript("OnUpdate", function(_, elapsed)
     local entries = key and pageEntries[key] or {}
     if key ~= drawn then Draw(key) end
     local pick = #entries > 0 and VisualPick(entries)
+    for index, slot in ipairs(slots) do -- the picked slot grows a little and its name lights up
+        local on = (index == pick)
+        slot:SetScale(on and 1.14 or 1)
+        if on then
+            slot.name:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+        else
+            slot.name:SetTextColor(0.8, 0.84, 0.88)
+        end
+    end
     if pick and slots[pick] and entries[pick] then
         highlight:ClearAllPoints()
         highlight:SetPoint("CENTER", slots[pick], "CENTER")

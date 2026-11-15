@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0
+- New look: teal rim and deep navy face, round icons with a rim tinted by item quality, thin dividers between slots, a golden halo and a slight zoom on the picked slot, outlined item names (the picked one in gold), a gold title.
+
 ## 0.2.3
 - Fix: the character could keep walking in one direction after the ring closed with the left stick still pushed. The ring now stops every walk it may have started.
 
