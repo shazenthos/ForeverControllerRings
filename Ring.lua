@@ -58,7 +58,7 @@ local function SecureButton(name)
 end
 
 -- While the ring is up this child takes the sticks, so aiming does not turn
--- the camera. It takes both sticks, so the left one walks through bindings
+-- the camera. It takes both sticks, so the left one is idle while the ring is up
 -- (below). It shows and hides with the ring, even in combat.
 local capture = CreateFrame("Frame", nil, ring)
 capture:SetAllPoints(ring)
@@ -318,7 +318,7 @@ SecureHandlerWrapScript(close, "OnClick", close, [=[
 ]=])
 
 -- While the ring is up it owns A, B, the D-pad and the sticks' directions
--- (the left one walks), whatever they do otherwise.
+-- (the left one does nothing), whatever they do otherwise.
 SecureHandlerWrapScript(ring, "OnShow", ring, Fill([=[
     local taken = newtable(@TAKENKEYS@)
     for _, key in ipairs(taken) do self:SetAttribute("fr-claimed-" .. key, nil) end
@@ -330,10 +330,6 @@ SecureHandlerWrapScript(ring, "OnShow", ring, Fill([=[
         for _, key in ipairs(newtable("PADRSTICKUP", "PADRSTICKDOWN", "PADRSTICKLEFT", "PADRSTICKRIGHT")) do
             self:SetBindingClick(true, modifier .. key, "ForeverControllerRingsAim", key)
         end
-        self:SetBinding(true, modifier .. "PADLSTICKUP", "MOVEFORWARD")
-        self:SetBinding(true, modifier .. "PADLSTICKDOWN", "MOVEBACKWARD")
-        self:SetBinding(true, modifier .. "PADLSTICKLEFT", "STRAFELEFT")
-        self:SetBinding(true, modifier .. "PADLSTICKRIGHT", "STRAFERIGHT")
     end
 ]=], {
     MODS = MODS_EXPR,
@@ -388,31 +384,12 @@ ring:HookScript("OnShow", function()
 end)
 ring:HookScript("OnHide", RestoreAxis)
 
----------------------------------------------------------------------------
--- Stuck walking. While the ring is up the left stick's directions are bound
--- to the movement commands (the ring holds the sticks, so the game's own
--- movement does not see them). If the ring closes while one is still held,
--- the binding goes away before its release arrives and the character keeps
--- walking. So on close, stop every movement the left stick may have
--- started (and once more a moment later, in case a late press got through).
----------------------------------------------------------------------------
-local STOPS = { "MoveForwardStop", "MoveBackwardStop", "StrafeLeftStop", "StrafeRightStop" }
-local function StopWalking()
-    -- (movement commands can be blocked in combat, and a blocked call raises the
-    -- "blocked from an action only available to the Blizzard UI" popup even
-    -- inside pcall, so they are only tried out of combat)
-    if InCombatLockdown() then return end
-    for _, name in ipairs(STOPS) do
-        local fn = _G[name]
-        if fn then pcall(fn) end
-    end
-end
-ring:HookScript("OnHide", function()
-    StopWalking()
-    C_Timer.After(0.15, function()
-        if not ring:IsShown() then StopWalking() end
-    end)
-end)
+-- (No walking while the ring is up: binding the left stick to the movement
+-- commands left the character running when the ring closed with the stick
+-- still held, and the commands that stop a walk are blocked to addons: they
+-- raise the "blocked from an action only available to the Blizzard UI" popup
+-- even from a pcall, in or out of combat. So the left stick does nothing
+-- while the ring is open.)
 
 ---------------------------------------------------------------------------
 -- Settings and pad indexes (out of combat)

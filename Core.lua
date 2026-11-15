@@ -26,7 +26,17 @@ end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
-frame:SetScript("OnEvent", function()
+-- If the game ever blocks one of our calls (the "blocked from an action only
+-- available to the Blizzard UI" popup), say which function it was.
+pcall(frame.RegisterEvent, frame, "ADDON_ACTION_BLOCKED")
+pcall(frame.RegisterEvent, frame, "ADDON_ACTION_FORBIDDEN")
+frame:SetScript("OnEvent", function(_, event, addonName, funcName)
+    if event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then
+        if addonName == ADDON then
+            FR.Print("|cffff6666blocked call:|r " .. tostring(funcName) .. " (" .. event .. ")")
+        end
+        return
+    end
     ForeverControllerRingsDB = ForeverControllerRingsDB or {}
     FR.db = ForeverControllerRingsDB
     for key, value in pairs(DEFAULTS) do
