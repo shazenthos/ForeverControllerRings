@@ -639,6 +639,13 @@ driver:SetScript("OnUpdate", function(_, elapsed)
     local entries = key and pageEntries[key] or {}
     if key ~= drawn then Draw(key) end
     local pick = #entries > 0 and VisualPick(entries)
+    -- Out of combat, hand the slot you see lit straight to the secure side every
+    -- frame, so letting go of the stick uses exactly that slot. (The stick's
+    -- direction keys only fire when it crosses their threshold, so the pick they
+    -- leave behind can lag what is on screen; in combat they are all there is.)
+    if pick and not InCombatLockdown() and ring:GetAttribute("fr-sticky") ~= pick then
+        pcall(ring.SetAttribute, ring, "fr-sticky", pick)
+    end
     for index, slot in ipairs(slots) do -- the picked slot grows a little and its name lights up
         local on = (index == pick)
         slot:SetScale(on and 1.14 or 1)

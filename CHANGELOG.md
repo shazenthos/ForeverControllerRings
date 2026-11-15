@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.3.0
+- Letting go of the stick now uses exactly the slot that is lit (out of combat the pick is synced every frame instead of waiting for the stick's direction keys).
 - New look: teal rim and deep navy face, round icons with a rim tinted by item quality, thin dividers between slots, a golden halo and a slight zoom on the picked slot, outlined item names (the picked one in gold), a gold title.
 
 ## 0.2.3
