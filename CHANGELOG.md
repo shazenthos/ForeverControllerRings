@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+- Release pipeline test: first version published automatically from GitHub. No code changes.
+
 ## 0.2.0
 - Map each ring to Forever's gamepad bar from a window (no slash commands needed).
 - Consumables ring and Quest Items ring, secure and usable in combat.
