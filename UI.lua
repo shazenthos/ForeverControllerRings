@@ -4,7 +4,7 @@
 local _, FR = ...
 
 local WIDTH, ROW_H = 470, 74
-local win, rows, releaseBox = nil, {}, nil
+local win, rows, releaseBox, rumbleBox = nil, {}, nil, nil
 
 local function RefreshRow(row)
     local slot = FR.FindPlacement(row.ring)
@@ -29,12 +29,13 @@ function FR.RefreshWindow()
     if not (win and win:IsShown()) then return end
     for _, row in ipairs(rows) do RefreshRow(row) end
     releaseBox:SetChecked(FR.db and FR.db.release or false)
+    rumbleBox:SetChecked(FR.db and FR.db.rumble or false)
 end
 
 local function Build()
     if win then return win end
     win = CreateFrame("Frame", "ForeverControllerRingsWindow", UIParent, "BackdropTemplate")
-    win:SetSize(WIDTH, 70 + #FR.RINGS * ROW_H + 50)
+    win:SetSize(WIDTH, 70 + #FR.RINGS * ROW_H + 78)
     win:SetPoint("CENTER", UIParent, "CENTER", 0, 60)
     win:SetFrameStrata("DIALOG")
     win:SetMovable(true)
@@ -106,6 +107,16 @@ local function Build()
     local label = win:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("LEFT", releaseBox, "RIGHT", 4, 1)
     label:SetText("Use the slot when I let go of the stick")
+
+    rumbleBox = CreateFrame("CheckButton", nil, win, "UICheckButtonTemplate")
+    rumbleBox:SetPoint("BOTTOMLEFT", 22, 44)
+    rumbleBox:SetScript("OnClick", function(self)
+        FR.db.rumble = self:GetChecked() and true or false
+        if FR.db.rumble then FR.Buzz("open") end
+    end)
+    local rumbleLabel = win:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    rumbleLabel:SetPoint("LEFT", rumbleBox, "RIGHT", 4, 1)
+    rumbleLabel:SetText("Vibrate the controller")
 
     win:SetScript("OnShow", FR.RefreshWindow)
     local events = CreateFrame("Frame", nil, win)

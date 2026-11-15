@@ -11,6 +11,7 @@ FR.LABELS = { consumables = "Consumables", quest = "Quest Items" }
 
 local DEFAULTS = {
     release = true, -- use the picked slot when the right stick is let go
+    rumble = true, -- a short buzz when the ring opens, the pick changes and an item is used
 }
 
 local loginHooks = {}
@@ -64,6 +65,7 @@ local function Help()
     FR.Print("/fcr release on|off         use a slot when the stick is let go")
     FR.Print("/fcr rebuild                refill the rings from your bags")
     FR.Print("/fcr probe                  check which APIs this client has")
+    FR.Print("/fcr rumble on|off|test    vibrate the controller (test: two taps and a buzz)")
     FR.Print("/fcr debug [off]             print every stick key event of an open ring")
 end
 
@@ -95,6 +97,15 @@ SlashCmdList["FCR"] = function(msg)
         FR.Print("rings rebuilt")
     elseif cmd == "probe" then
         FR.Probe()
+    elseif cmd == "rumble" then
+        if args[2] == "test" then
+            FR.Buzz("test", true)
+            FR.Print("rumble test: two taps, then a longer buzz (felt it? if not, this controller does not vibrate through the game)")
+        else
+            FR.db.rumble = (args[2] ~= "off")
+            FR.Print("rumble: " .. (FR.db.rumble and "on" or "off"))
+            if FR.db.rumble then FR.Buzz("open") end
+        end
     elseif cmd == "debug" then
         FR.debug = (args[2] ~= "off")
         FR.Print("debug " .. (FR.debug and "on: every stick key event is printed" or "off"))

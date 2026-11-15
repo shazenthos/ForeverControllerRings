@@ -259,6 +259,11 @@ aim:HookScript("OnClick", function(_, button, down)
     end
 end)
 
+-- (a click that used a slot has already hidden the ring when this runs)
+aim:HookScript("OnClick", function(_, _, down)
+    if not down and not ring:IsShown() then FR.Buzz("use") end
+end)
+
 -- A: use the slot the stick points at, else the sticky pick.
 local use = SecureButton("ForeverControllerRingsUse")
 use:RegisterForClicks("AnyDown")
@@ -272,6 +277,10 @@ SecureHandlerWrapScript(use, "OnClick", use, Fill([=[
     if not pick then return false end
     @FILL@
 ]=], { FILL = FILL }))
+
+use:HookScript("OnClick", function(_, _, down)
+    if down and not ring:IsShown() then FR.Buzz("use") end
+end)
 
 -- D-pad up / down: step the pick round the ring.
 local step = SecureButton("ForeverControllerRingsStep")
@@ -391,6 +400,44 @@ ring:HookScript("OnHide", RestoreAxis)
 -- raise the "blocked from an action only available to the Blizzard UI" popup
 -- even from a pcall, in or out of combat. So the left stick does nothing
 -- while the ring is open.)
+
+---------------------------------------------------------------------------
+-- Rumble. The game's C_GamePad.SetVibration, heavy motor only ("Low"): the
+-- author of Controller Companion measured on a DualSense that the light
+-- motor and the triggers are too weak or do nothing, and that steps shorter
+-- than 0.1 s blur together. Steps are { strength 0..1, seconds }.
+---------------------------------------------------------------------------
+local PATTERNS = {
+    open = { { 0.35, 0.10 } },
+    tick = { { 0.22, 0.10 } },
+    use = { { 0.90, 0.14 } },
+    test = { { 0.60, 0.12 }, { 0, 0.15 }, { 0.60, 0.12 }, { 0, 0.15 }, { 1, 0.25 } },
+}
+local playing = 0
+function FR.Buzz(name, force)
+    if not force and not (FR.db and FR.db.rumble) then return end
+    local gamepad = C_GamePad
+    local steps = PATTERNS[name]
+    if not (steps and gamepad and gamepad.SetVibration and gamepad.StopVibration) then return end
+    playing = playing + 1
+    local token = playing
+    pcall(gamepad.StopVibration)
+    local at = 0
+    for _, step in ipairs(steps) do
+        local level = step[1]
+        C_Timer.After(at, function()
+            if token ~= playing then return end
+            pcall(gamepad.StopVibration)
+            if level > 0 then pcall(gamepad.SetVibration, "Low", level) end
+        end)
+        at = at + step[2]
+    end
+    C_Timer.After(at, function()
+        if token == playing then pcall(gamepad.StopVibration) end
+    end)
+end
+
+ring:HookScript("OnShow", function() FR.Buzz("open") end)
 
 ---------------------------------------------------------------------------
 -- Settings and pad indexes (out of combat)
@@ -606,6 +653,26 @@ for index = 1, PER_PAGE do
     slots[index] = slot
 end
 
+-- Button pictures from the game's own prompt tables, so they match the
+-- controller in use (Xbox, PlayStation, Switch); the plain letter when the
+-- client has no picture for the key. (Method seen in Controller Companion, MIT.)
+local function Glyph(key, fallback)
+    local util = InputIconTextureSetUtility
+    if util and util.GetActiveInputIconButtonTextures and C_Texture and C_Texture.GetAtlasInfo then
+        local ok, textures = pcall(util.GetActiveInputIconButtonTextures, key)
+        local atlas = ok and type(textures) == "table" and textures[1]
+        if type(atlas) == "string" and C_Texture.GetAtlasInfo(atlas) then
+            return ("|A:%s:15:15|a"):format(atlas)
+        end
+    end
+    return fallback
+end
+
+local function HintText()
+    return Glyph("PAD1", "A") .. " use    " .. Glyph("PAD2", "B") .. " close\n"
+        .. Glyph("DIRPADHORIZONTAL", "D-pad") .. " pages"
+end
+
 local drawn
 
 -- (item counts and cooldowns may be secret values in combat: skip then)
@@ -639,6 +706,7 @@ local function Draw(key)
     title:SetText(entries.groupLabel or FR.LABELS[ringKey or ""] or "")
     local tone = entries.color or GOLD
     title:SetTextColor(tone[1], tone[2], tone[3])
+    hint:SetText(HintText())
     groupText:SetTextColor(0.62, 0.68, 0.74)
     groupText:SetText(entries.groupLabel and (FR.LABELS[ringKey or ""] or "") .. (of > 1 and (" " .. number .. "/" .. of) or "") or "")
     for index, slot in ipairs(slots) do
@@ -673,6 +741,7 @@ end
 
 local driver = CreateFrame("Frame", nil, ring)
 local acc = 0
+local lastPick, lastTick = nil, 0
 driver:SetScript("OnUpdate", function(_, elapsed)
     local key = ring:GetAttribute("fr-active")
     local entries = key and pageEntries[key] or {}
@@ -689,6 +758,14 @@ driver:SetScript("OnUpdate", function(_, elapsed)
     -- colour here: moving, sizing or scaling anything hung on the ring (a
     -- protected frame) is blocked in combat and raises the "blocked from an
     -- action only available to the Blizzard UI" popup.
+    -- a light tick each time the pick lands on another slot (not more than ~7 a second)
+    if pick ~= lastPick then
+        if pick and lastPick ~= nil and GetTime() - lastTick > 0.14 then
+            lastTick = GetTime()
+            FR.Buzz("tick")
+        end
+        lastPick = pick
+    end
     local combat = InCombatLockdown()
     for index, slot in ipairs(slots) do
         local on = (index == pick)
@@ -711,7 +788,7 @@ driver:SetScript("OnUpdate", function(_, elapsed)
         for index, entry in ipairs(entries) do UpdateSlot(slots[index], entry) end
     end
 end)
-ring:HookScript("OnShow", function() drawn = nil end)
+ring:HookScript("OnShow", function() drawn = nil; lastPick = false end)
 
 ---------------------------------------------------------------------------
 -- Wiring
