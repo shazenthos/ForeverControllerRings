@@ -14,9 +14,7 @@ local CLASS_QUESTITEM = ITEM_CLASS.Questitem or 12
 -- rim of its slots) and the name shown in the middle of the ring. Items are
 -- gathered by group, the best first inside it.
 local GROUPS = {
-    food = { order = 1, label = "Food", color = { 0.95, 0.60, 0.20 } },
-    meal = { order = 1, label = "Food & drink", color = { 0.95, 0.60, 0.20 } }, -- (could not tell which)
-    drink = { order = 2, label = "Drink", color = { 0.30, 0.62, 1.00 } },
+    food = { order = 1, label = "Food & drink", color = { 0.95, 0.60, 0.20 } },
     potion = { order = 3, label = "Potion", color = { 0.90, 0.30, 0.30 } },
     bandage = { order = 4, label = "Bandage", color = { 0.92, 0.88, 0.75 } },
     elixir = { order = 5, label = "Elixir / Flask", color = { 0.35, 0.80, 0.45 } },
@@ -25,14 +23,13 @@ local GROUPS = {
     questuse = { order = 1, label = "Quest item", color = { 0.25, 0.72, 0.79 } },
     queststart = { order = 2, label = "Starts a quest", color = { 0.96, 0.78, 0.29 } },
 }
--- consumable subclass -> group (5, food & drink, is split below)
-local SUBCLASS_GROUP = { [1] = "potion", [7] = "bandage", [4] = "scroll", [2] = "elixir", [3] = "elixir" }
+-- consumable subclass -> group (5 is food & drink together)
+local SUBCLASS_GROUP = { [5] = "food", [1] = "potion", [7] = "bandage", [4] = "scroll", [2] = "elixir", [3] = "elixir" }
 
 -- The kinds each ring has, in their default order; the player can turn kinds
 -- off and reorder them (the "Kinds and order" panel keeps that in FR.db.groups).
--- ("meal", food we could not tell from drink, travels with "food".)
 FR.GROUP_DEFAULTS = {
-    consumables = { "food", "drink", "potion", "bandage", "elixir", "scroll", "other" },
+    consumables = { "food", "potion", "bandage", "elixir", "scroll", "other" },
     quest = { "questuse", "queststart" },
 }
 
@@ -86,21 +83,6 @@ function FR.MoveGroup(ringKey, key, delta)
     FR.Rebuild()
 end
 
--- Food or drink? Their on-use spell is named "Food" or "Drink" (compared with
--- the name of the game's own spells, so it works in any language).
-local DRINK_SPELL, FOOD_SPELL = 430, 433
-local function SpellName(id)
-    return C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(id)
-end
-local function FoodGroup(itemID)
-    local spell = C_Item.GetItemSpell and C_Item.GetItemSpell(itemID)
-    if spell then
-        if spell == SpellName(DRINK_SPELL) or spell == "Drink" then return "drink" end
-        if spell == SpellName(FOOD_SPELL) or spell == "Food" then return "food" end
-    end
-    return "meal"
-end
-
 -- (item level and required level, for "best first"; 0 until the item is cached)
 local function Levels(itemID)
     local ok, _, _, _, itemLevel, minLevel = pcall(C_Item.GetItemInfo, itemID)
@@ -140,7 +122,7 @@ local function MakeEntry(itemID, icon, groupKey)
         type = "item",
         value = "item:" .. itemID,
         group = group.label,
-        groupKey = (groupKey == "meal") and "food" or (groupKey or "other"),
+        groupKey = groupKey or "other",
         color = group.color,
     }
 end
@@ -185,14 +167,13 @@ local function BuildConsumables()
     EachBagItem(function(itemID)
         local icon, classID, subclassID = Instant(itemID)
         if classID == CLASS_CONSUMABLE then
-            local key = SUBCLASS_GROUP[subclassID] or (subclassID == 5 and FoodGroup(itemID)) or "other"
+            local key = SUBCLASS_GROUP[subclassID] or "other"
             local entry = MakeEntry(itemID, icon, key)
             entry.minLevel, entry.itemLevel = Levels(itemID)
             items[#items + 1] = entry
         end
     end)
     local kept, total = Arrange(items, "consumables", function(a, b)
-        if a.group ~= b.group then return a.group < b.group end -- (food before "Food & drink" ones)
         if a.minLevel ~= b.minLevel then return a.minLevel > b.minLevel end
         if a.itemLevel ~= b.itemLevel then return a.itemLevel > b.itemLevel end
         return a.label < b.label

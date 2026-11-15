@@ -2,13 +2,13 @@
 
 Two radial rings for WoW: Forever's gamepad UI, and nothing else:
 
-- **Consumables**: everything of item class Consumable in your bags (food and drink, potions, bandages, scrolls, elixirs, flasks, Forever's new kinds). Up to 24, in pages of 8.
+- **Consumables**: everything of item class Consumable in your bags (food and drink, potions, bandages, scrolls, elixirs, flasks, Forever's new kinds), one page per kind, 8 slots a page.
 - **Quest Items**: items you use for a quest, then items that start one.
 
 They are **mapped like a spell**: you put each ring on a button of Forever's own gamepad bar. No R3, no button combinations; the ring opens when you press that button.
 
 ## Order and colours
-Each kind of item has its own page (D-pad left/right turns pages), in a fixed order, each kind with its own colour on the rim of its slots: Food (orange), Drink (blue), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet). Within a kind the best item (highest required level) comes first. The page's kind is named at the top of the ring. Quest items: ones you use (teal), then ones that start a quest (gold).
+Each kind of item has its own page (D-pad left/right turns pages), in a fixed order, each kind with its own colour on the rim of its slots: Food & drink (orange), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet). Within a kind the best item (highest required level) comes first. The page's kind is named at the top of the ring. Quest items: ones you use (teal), then ones that start a quest (gold).
 
 You choose which kinds show and in what order: in the window, press **Kinds and order** under a ring, untick the kinds you do not want and use the arrows to move a kind up or down (the order is the order of the pages).
 

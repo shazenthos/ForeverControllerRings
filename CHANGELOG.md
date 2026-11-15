@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.5.1
+- Food and drink are one kind again, "Food & drink" (the game does not tell them apart in a way the addon can read, so they used to be split in two pages by guesswork).
 - Fix layout: the "Kinds and order" button no longer sits on top of the mapping status, and its panel opens beside the main window instead of over it. Both windows stay on screen.
 
 ## 0.5.0
@@ -10,7 +11,7 @@
 - Vibration: a short buzz when the ring opens, a light tick each time the pick lands on another slot, and a firm one when an item is used. On by default; a checkbox in the window and `/fcr rumble on|off` turn it off; `/fcr rumble test` plays two taps and a buzz to check that your controller (a Steam Deck, say) vibrates through the game. Heavy motor only, as measured by Controller Companion's author on a DualSense.
 - The hint in the middle shows your controller's own button pictures (Xbox, PlayStation or Switch) instead of letters.
 - One page per kind: each kind of item (Food, Drink, Potion...) has its own page, named in its colour at the top of the ring, with the ring and page number under it. D-pad left/right turns pages; a kind with more than 8 items continues on a second page. Up to 12 pages per ring (96 items).
-- Items are now sorted and colour-coded by kind. Consumables go round the ring in a fixed order: Food (orange), Drink (blue), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet); inside each kind the best (highest required level) comes first. Quest items: ones you use (teal), then ones that start a quest (gold). The rim of each slot has its kind's colour and the kind is named in the middle of the ring.
+- Items are now sorted and colour-coded by kind. Consumables go round the ring in a fixed order: Food & drink (orange), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet); inside each kind the best (highest required level) comes first. Quest items: ones you use (teal), then ones that start a quest (gold). The rim of each slot has its kind's colour and the kind is named in the middle of the ring.
 
 ## 0.3.2
 - Fix the "blocked from an action only available to the Blizzard UI" popup when closing the ring or choosing an item: the calls that stop a walk (added in 0.2.3) are blocked to addons, even from a pcall. They are gone. The left stick now does nothing while the ring is open (it used to be bound to the movement commands, which left the character running if the ring closed with the stick held).
