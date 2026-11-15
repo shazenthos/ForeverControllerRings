@@ -13,8 +13,11 @@
 local _, FR = ...
 
 local PER_PAGE, MAX_PAGES = 8, 12
+-- Designed for the Steam Deck's screen first (1280x800: at the game's default
+-- scale the UI is about 1229 x 768 units): the ring takes two thirds of the
+-- height and every text is at least 11 units.
 local SIZE, RADIUS, ICON = 520, 176, 54
-local NAME_W = 106 -- width of an item name under its icon
+local NAME_W = 110 -- width of an item name under its icon
 local HUB = 214 -- diameter of the centre disc
 local PICK_SQ = 0.25 -- the stick must be at least half way out (for visuals)
 local AXIS_CVAR = "GamePadStickAxisButtons"
@@ -602,12 +605,12 @@ selected:SetShadowOffset(1, -1)
 local groupText = ring:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 groupText:SetPoint("CENTER", ring, "CENTER", 0, -32)
 groupText:SetWidth(150)
-groupText:SetFont(FONT, 10, "")
+groupText:SetFont(FONT, 11, "")
 groupText:SetJustifyH("CENTER")
 local hint = ring:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-hint:SetPoint("CENTER", ring, "CENTER", 0, -64)
-hint:SetWidth(130)
-hint:SetFont(FONT, 10, "")
+hint:SetPoint("CENTER", ring, "CENTER", 0, -62)
+hint:SetWidth(140)
+hint:SetFont(FONT, 11, "")
 hint:SetJustifyH("CENTER")
 hint:SetText("A use   B close\nD-pad: pages")
 
@@ -637,7 +640,7 @@ for index = 1, PER_PAGE do
     slot.count:SetPoint("BOTTOMRIGHT", 4, -2)
     -- the item's name, under its icon (two lines at most)
     slot.name = slot:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    slot.name:SetFont(FONT, 11, "OUTLINE")
+    slot.name:SetFont(FONT, 12, "OUTLINE")
     slot.name:SetPoint("TOP", slot, "BOTTOM", 0, -5)
     slot.name:SetWidth(NAME_W)
     slot.name:SetMaxLines(2)
@@ -662,7 +665,7 @@ local function Glyph(key, fallback)
         local ok, textures = pcall(util.GetActiveInputIconButtonTextures, key)
         local atlas = ok and type(textures) == "table" and textures[1]
         if type(atlas) == "string" and C_Texture.GetAtlasInfo(atlas) then
-            return ("|A:%s:15:15|a"):format(atlas)
+            return ("|A:%s:17:17|a"):format(atlas)
         end
     end
     return fallback
@@ -793,7 +796,23 @@ ring:HookScript("OnShow", function() drawn = nil; lastPick = false end)
 ---------------------------------------------------------------------------
 -- Wiring
 ---------------------------------------------------------------------------
+-- Keep the ring on screen whatever the UI scale: at most 85% of the height of
+-- the screen (a protected frame cannot be rescaled in combat, so then it waits).
+local fitPending = false
+local function FitRing()
+    if InCombatLockdown() then
+        fitPending = true
+        return
+    end
+    fitPending = false
+    local height = UIParent:GetHeight()
+    if height and height > 0 then
+        ring:SetScale(math.min(1, height * 0.85 / SIZE))
+    end
+end
+
 FR.OnLogin(function()
+    FitRing()
     FR.Rebuild()
     FR.ApplySettings()
     RestoreAxis()
@@ -803,9 +822,14 @@ local events = CreateFrame("Frame")
 for _, event in ipairs(FR.REBUILD_EVENTS) do events:RegisterEvent(event) end
 events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:RegisterEvent("UPDATE_BINDINGS")
+events:RegisterEvent("UI_SCALE_CHANGED")
+events:RegisterEvent("DISPLAY_SIZE_CHANGED")
 events:SetScript("OnEvent", function(_, event)
     if not FR.db then return end
-    if event == "PLAYER_REGEN_ENABLED" then
+    if event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
+        FitRing()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        if fitPending then FitRing() end
         RestoreAxis()
         if settingsPending then FR.ApplySettings() end
         if pending then FR.Rebuild() end

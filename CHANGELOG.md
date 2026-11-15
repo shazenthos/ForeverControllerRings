@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.5.1
+- Designed for the Steam Deck's screen (1280x800, about 1229 x 768 UI units): texts at least 11 units (item names 12), larger button pictures, and the ring shrinks to at most 85% of the screen height if the UI scale would push it off.
 - Food and drink are one kind again, "Food & drink" (the game does not tell them apart in a way the addon can read, so they used to be split in two pages by guesswork).
 - Fix layout: the "Kinds and order" button no longer sits on top of the mapping status, and its panel opens beside the main window instead of over it. Both windows stay on screen.
 
