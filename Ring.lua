@@ -13,8 +13,9 @@
 local _, FR = ...
 
 local PER_PAGE, MAX_PAGES = 8, 3
-local SIZE, RADIUS, ICON = 400, 135, 46
-local NAME_W = 84 -- width of an item name under its icon
+local SIZE, RADIUS, ICON = 520, 176, 54
+local NAME_W = 106 -- width of an item name under its icon
+local HUB = 214 -- diameter of the centre disc
 local PICK_SQ = 0.25 -- the stick must be at least half way out (for visuals)
 local AXIS_CVAR = "GamePadStickAxisButtons"
 local MODS = { "", "SHIFT-", "CTRL-", "ALT-", "CTRL-SHIFT-", "ALT-SHIFT-", "CTRL-ALT-", "CTRL-ALT-SHIFT-" }
@@ -505,9 +506,9 @@ local rim = Disc(ring, "BACKGROUND", 0, SIZE, TEAL, 0.9)
 rim:SetPoint("CENTER")
 local face = Disc(ring, "BACKGROUND", 1, SIZE - 6, { 0.04, 0.06, 0.11 }, 0.88)
 face:SetPoint("CENTER")
-local hubRim = Disc(ring, "BACKGROUND", 2, 168, TEAL, 0.45)
+local hubRim = Disc(ring, "BACKGROUND", 2, HUB + 4, TEAL, 0.45)
 hubRim:SetPoint("CENTER")
-local hub = Disc(ring, "BACKGROUND", 3, 164, { 0.02, 0.03, 0.07 }, 0.9)
+local hub = Disc(ring, "BACKGROUND", 3, HUB, { 0.02, 0.03, 0.07 }, 0.9)
 hub:SetPoint("CENTER")
 
 -- Thin dividers between the eight slots.
@@ -517,32 +518,32 @@ for index = 1, PER_PAGE do
     if line then
         line:SetThickness(2)
         line:SetColorTexture(TEAL[1], TEAL[2], TEAL[3], 0.28)
-        line:SetStartPoint("CENTER", ring, math.cos(angle) * 84, math.sin(angle) * 84)
-        line:SetEndPoint("CENTER", ring, math.cos(angle) * 190, math.sin(angle) * 190)
+        line:SetStartPoint("CENTER", ring, math.cos(angle) * (HUB / 2 + 2), math.sin(angle) * (HUB / 2 + 2))
+        line:SetEndPoint("CENTER", ring, math.cos(angle) * (SIZE / 2 - 8), math.sin(angle) * (SIZE / 2 - 8))
     end
 end
 
 local FONT = GameFontHighlightSmall and GameFontHighlightSmall:GetFont() or "Fonts\\FRIZQT__.TTF"
 
 local title = ring:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
--- (the hub is 164 wide, narrower toward its top and bottom: keep every line
+-- (the hub is HUB wide, narrower toward its top and bottom: keep every line
 -- well inside it, wrapping instead of running over the rim)
-title:SetPoint("CENTER", ring, "CENTER", 0, 30)
-title:SetWidth(128)
-title:SetFont(FONT, 14, "")
+title:SetPoint("CENTER", ring, "CENTER", 0, 40)
+title:SetWidth(164)
+title:SetFont(FONT, 16, "")
 title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
 title:SetShadowOffset(1, -1)
 local selected = ring:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 selected:SetPoint("CENTER", ring, "CENTER", 0, -2)
-selected:SetWidth(126)
-selected:SetFont(FONT, 12, "")
+selected:SetWidth(160)
+selected:SetFont(FONT, 14, "")
 selected:SetMaxLines(2)
 selected:SetJustifyH("CENTER")
 selected:SetShadowOffset(1, -1)
 local hint = ring:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-hint:SetPoint("CENTER", ring, "CENTER", 0, -50)
-hint:SetWidth(100)
-hint:SetFont(FONT, 9, "")
+hint:SetPoint("CENTER", ring, "CENTER", 0, -64)
+hint:SetWidth(130)
+hint:SetFont(FONT, 10, "")
 hint:SetJustifyH("CENTER")
 hint:SetText("A use   B close\nD-pad: pages")
 
@@ -572,7 +573,7 @@ for index = 1, PER_PAGE do
     slot.count:SetPoint("BOTTOMRIGHT", 4, -2)
     -- the item's name, under its icon (two lines at most)
     slot.name = slot:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    slot.name:SetFont(FONT, 10, "OUTLINE")
+    slot.name:SetFont(FONT, 11, "OUTLINE")
     slot.name:SetPoint("TOP", slot, "BOTTOM", 0, -5)
     slot.name:SetWidth(NAME_W)
     slot.name:SetMaxLines(2)
