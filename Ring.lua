@@ -525,17 +525,26 @@ end
 local FONT = GameFontHighlightSmall and GameFontHighlightSmall:GetFont() or "Fonts\\FRIZQT__.TTF"
 
 local title = ring:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-title:SetPoint("CENTER", ring, "CENTER", 0, 26)
+-- (the hub is 164 wide, narrower toward its top and bottom: keep every line
+-- well inside it, wrapping instead of running over the rim)
+title:SetPoint("CENTER", ring, "CENTER", 0, 30)
+title:SetWidth(128)
+title:SetFont(FONT, 14, "")
 title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
 title:SetShadowOffset(1, -1)
-local selected = ring:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-selected:SetPoint("CENTER", ring, "CENTER", 0, -6)
-selected:SetWidth(150)
+local selected = ring:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+selected:SetPoint("CENTER", ring, "CENTER", 0, -2)
+selected:SetWidth(126)
+selected:SetFont(FONT, 12, "")
 selected:SetMaxLines(2)
+selected:SetJustifyH("CENTER")
 selected:SetShadowOffset(1, -1)
 local hint = ring:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-hint:SetPoint("CENTER", ring, "CENTER", 0, -40)
-hint:SetText("A use   B close   D-pad pages")
+hint:SetPoint("CENTER", ring, "CENTER", 0, -50)
+hint:SetWidth(100)
+hint:SetFont(FONT, 9, "")
+hint:SetJustifyH("CENTER")
+hint:SetText("A use   B close\nD-pad: pages")
 
 local slots = {}
 for index = 1, PER_PAGE do

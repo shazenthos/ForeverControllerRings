@@ -2,6 +2,7 @@
 
 ## 0.3.2
 - Fix the "blocked from an action only available to the Blizzard UI" popup when closing the ring or choosing an item: the calls that stop a walk (added in 0.2.3) are blocked to addons, even from a pcall. They are gone. The left stick now does nothing while the ring is open (it used to be bound to the movement commands, which left the character running if the ring closed with the stick held).
+- The text in the middle of the ring is smaller and wraps inside the hub instead of running over its rim.
 - If the game blocks any other call of the addon, the chat now says which function it was.
 
 ## 0.3.1
