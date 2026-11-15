@@ -12,7 +12,7 @@
 -- secure attributes, which are rewritten out of combat only.
 local _, FR = ...
 
-local PER_PAGE, MAX_PAGES = 8, 3
+local PER_PAGE, MAX_PAGES = 8, 12
 local SIZE, RADIUS, ICON = 520, 176, 54
 local NAME_W = 106 -- width of an item name under its icon
 local HUB = 214 -- diameter of the centre disc
@@ -443,14 +443,22 @@ function FR.Rebuild()
     wipe(pageEntries)
     for _, ringKey in ipairs(FR.RINGS) do
         local entries = FR.Builders[ringKey]()
-        local pages = math.max(1, math.min(MAX_PAGES, math.ceil(#entries / PER_PAGE)))
-        for number = 1, pages do
+        -- One page per kind (food, drink, potions...): a new page starts when
+        -- the kind changes or the page is full. The entries come sorted by kind.
+        local pages = {}
+        for _, entry in ipairs(entries) do
+            local last = pages[#pages]
+            if not last or #last >= PER_PAGE or last.groupLabel ~= entry.group then
+                if #pages >= MAX_PAGES then break end
+                last = { groupLabel = entry.group, color = entry.color }
+                pages[#pages + 1] = last
+            end
+            last[#last + 1] = entry
+        end
+        if #pages == 0 then pages[1] = {} end
+        for number, list in ipairs(pages) do
             local key = ringKey .. number
-            local list = {}
-            for index = 1, PER_PAGE do
-                local entry = entries[(number - 1) * PER_PAGE + index]
-                if not entry then break end
-                list[index] = entry
+            for index, entry in ipairs(list) do
                 local angle = SlotAngle(index)
                 ring:SetAttribute(key .. "-dx-" .. index, math.cos(angle))
                 ring:SetAttribute(key .. "-dy-" .. index, math.sin(angle))
@@ -461,9 +469,13 @@ function FR.Rebuild()
             ring:SetAttribute(key .. "-count", #list)
             ring:SetAttribute(key .. "-ring", ringKey)
             ring:SetAttribute(key .. "-number", number)
-            ring:SetAttribute(key .. "-of", pages)
+            ring:SetAttribute(key .. "-of", #pages)
             list.empty = entries.empty
             pageEntries[key] = list
+        end
+        -- (pages past the new last one are emptied, so a stale one cannot be reached)
+        for number = #pages + 1, MAX_PAGES do
+            ring:SetAttribute(ringKey .. number .. "-count", 0)
         end
         ring:SetAttribute("fr-first-" .. ringKey, ringKey .. 1)
     end
@@ -623,7 +635,12 @@ local function Draw(key)
     local entries = key and pageEntries[key] or {}
     local ringKey = key and ring:GetAttribute(key .. "-ring")
     local number, of = key and ring:GetAttribute(key .. "-number") or 1, key and ring:GetAttribute(key .. "-of") or 1
-    title:SetText((FR.LABELS[ringKey or ""] or "") .. (of > 1 and (" " .. number .. "/" .. of) or ""))
+    -- the page is one kind of item: its name, in its colour; under it, which ring and page
+    title:SetText(entries.groupLabel or FR.LABELS[ringKey or ""] or "")
+    local tone = entries.color or GOLD
+    title:SetTextColor(tone[1], tone[2], tone[3])
+    groupText:SetTextColor(0.62, 0.68, 0.74)
+    groupText:SetText(entries.groupLabel and (FR.LABELS[ringKey or ""] or "") .. (of > 1 and (" " .. number .. "/" .. of) or "") or "")
     for index, slot in ipairs(slots) do
         local entry = entries[index]
         if entry then
@@ -685,12 +702,8 @@ driver:SetScript("OnUpdate", function(_, elapsed)
     end
     if pick and slots[pick] and entries[pick] then
         selected:SetText(entries[pick].label)
-        local color = entries[pick].color or STEEL
-        groupText:SetTextColor(color[1], color[2], color[3])
-        groupText:SetText(entries[pick].group or "")
     elseif #entries > 0 then
         selected:SetText("")
-        groupText:SetText("")
     end
     acc = acc + elapsed
     if acc > 0.25 then

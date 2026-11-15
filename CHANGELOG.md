@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.4.0
+- One page per kind: each kind of item (Food, Drink, Potion...) has its own page, named in its colour at the top of the ring, with the ring and page number under it. D-pad left/right turns pages; a kind with more than 8 items continues on a second page. Up to 12 pages per ring (96 items).
 - Items are now sorted and colour-coded by kind. Consumables go round the ring in a fixed order: Food (orange), Drink (blue), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet); inside each kind the best (highest required level) comes first. Quest items: ones you use (teal), then ones that start a quest (gold). The rim of each slot has its kind's colour and the kind is named in the middle of the ring.
 
 ## 0.3.2

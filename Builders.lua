@@ -4,7 +4,7 @@
 -- Out of combat only: the ring's secure data cannot change in combat.
 local _, FR = ...
 
-local MAX_ENTRIES = 24
+local MAX_ENTRIES = 96 -- (12 pages of 8)
 local NUM_BAGS = NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
 local ITEM_CLASS = Enum and Enum.ItemClass or {}
 local CLASS_CONSUMABLE = ITEM_CLASS.Consumable or 0

@@ -8,7 +8,7 @@ Two radial rings for WoW: Forever's gamepad UI, and nothing else:
 They are **mapped like a spell**: you put each ring on a button of Forever's own gamepad bar. No R3, no button combinations; the ring opens when you press that button.
 
 ## Order and colours
-Consumables sit in a fixed order round the ring, each kind with its own colour on the rim of its slots: Food (orange), Drink (blue), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet). Within a kind the best item (highest required level) comes first. The kind of the picked item is named in the middle. Quest items: ones you use (teal), then ones that start a quest (gold).
+Each kind of item has its own page (D-pad left/right turns pages), in a fixed order, each kind with its own colour on the rim of its slots: Food (orange), Drink (blue), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet). Within a kind the best item (highest required level) comes first. The page's kind is named at the top of the ring. Quest items: ones you use (teal), then ones that start a quest (gold).
 
 ## Install
 Copy the `ForeverControllerRings` folder into your Forever client's `Interface/AddOns/` folder, then restart the game fully (a `/reload` does not load new files).
