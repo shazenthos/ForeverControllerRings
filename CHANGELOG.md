@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.0
+- New "Kinds and order" panel (a button on each ring in the window): turn each kind of item on or off (Food, Drink, Potion, Bandage, Elixir / Flask, Scroll, Other; for quests, items you use and items that start a quest) and put the kinds in the order you like. The order is the order of the pages. Saved between sessions; if every kind is off the ring says so.
+
 ## 0.4.0
 - Vibration: a short buzz when the ring opens, a light tick each time the pick lands on another slot, and a firm one when an item is used. On by default; a checkbox in the window and `/fcr rumble on|off` turn it off; `/fcr rumble test` plays two taps and a buzz to check that your controller (a Steam Deck, say) vibrates through the game. Heavy motor only, as measured by Controller Companion's author on a DualSense.
 - The hint in the middle shows your controller's own button pictures (Xbox, PlayStation or Switch) instead of letters.

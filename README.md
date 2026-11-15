@@ -10,6 +10,8 @@ They are **mapped like a spell**: you put each ring on a button of Forever's own
 ## Order and colours
 Each kind of item has its own page (D-pad left/right turns pages), in a fixed order, each kind with its own colour on the rim of its slots: Food (orange), Drink (blue), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet). Within a kind the best item (highest required level) comes first. The page's kind is named at the top of the ring. Quest items: ones you use (teal), then ones that start a quest (gold).
 
+You choose which kinds show and in what order: in the window, press **Kinds and order** under a ring, untick the kinds you do not want and use the arrows to move a kind up or down (the order is the order of the pages).
+
 ## Vibration
 A short buzz opens the ring, a light tick marks each new slot you aim at, a firm one confirms an item. Turn it off with the checkbox in the window or `/fcr rumble off`. `/fcr rumble test` plays two taps and a buzz to check that your controller vibrates through the game.
 

@@ -28,6 +28,64 @@ local GROUPS = {
 -- consumable subclass -> group (5, food & drink, is split below)
 local SUBCLASS_GROUP = { [1] = "potion", [7] = "bandage", [4] = "scroll", [2] = "elixir", [3] = "elixir" }
 
+-- The kinds each ring has, in their default order; the player can turn kinds
+-- off and reorder them (the "Kinds and order" panel keeps that in FR.db.groups).
+-- ("meal", food we could not tell from drink, travels with "food".)
+FR.GROUP_DEFAULTS = {
+    consumables = { "food", "drink", "potion", "bandage", "elixir", "scroll", "other" },
+    quest = { "questuse", "queststart" },
+}
+
+-- The kinds of a ring in the player's order: { key, label, color, enabled }.
+function FR.GroupList(ringKey)
+    local cfg = FR.db and FR.db.groups and FR.db.groups[ringKey] or {}
+    local defaults = FR.GROUP_DEFAULTS[ringKey] or {}
+    local valid = {}
+    for _, key in ipairs(defaults) do valid[key] = true end
+    local list, seen = {}, {}
+    local function add(key)
+        if valid[key] and not seen[key] then
+            seen[key] = true
+            local group = GROUPS[key]
+            list[#list + 1] = {
+                key = key, label = group.label, color = group.color,
+                enabled = not (cfg.off and cfg.off[key]),
+            }
+        end
+    end
+    for _, key in ipairs(cfg.order or {}) do add(key) end
+    for _, key in ipairs(defaults) do add(key) end
+    return list
+end
+
+local function GroupConfig(ringKey)
+    FR.db.groups = FR.db.groups or {}
+    FR.db.groups[ringKey] = FR.db.groups[ringKey] or {}
+    local cfg = FR.db.groups[ringKey]
+    cfg.off = cfg.off or {}
+    return cfg
+end
+
+function FR.SetGroupEnabled(ringKey, key, enabled)
+    GroupConfig(ringKey).off[key] = (not enabled) or nil
+    FR.Rebuild()
+end
+
+-- delta -1: one place earlier, +1: one later
+function FR.MoveGroup(ringKey, key, delta)
+    local keys = {}
+    for i, group in ipairs(FR.GroupList(ringKey)) do keys[i] = group.key end
+    for i, k in ipairs(keys) do
+        local j = i + delta
+        if k == key and keys[j] then
+            keys[i], keys[j] = keys[j], keys[i]
+            break
+        end
+    end
+    GroupConfig(ringKey).order = keys
+    FR.Rebuild()
+end
+
 -- Food or drink? Their on-use spell is named "Food" or "Drink" (compared with
 -- the name of the game's own spells, so it works in any language).
 local DRINK_SPELL, FOOD_SPELL = 430, 433
@@ -82,8 +140,8 @@ local function MakeEntry(itemID, icon, groupKey)
         type = "item",
         value = "item:" .. itemID,
         group = group.label,
+        groupKey = (groupKey == "meal") and "food" or (groupKey or "other"),
         color = group.color,
-        order = group.order,
     }
 end
 
@@ -92,6 +150,31 @@ local function ByLabel(a, b) return a.label < b.label end
 local function Cap(list)
     for i = #list, MAX_ENTRIES + 1, -1 do list[i] = nil end
     return list
+end
+
+-- Keep the kinds that are on, in the player's order of kinds, `tie` inside a
+-- kind. Returns the list and how many items there were before filtering.
+local function Arrange(items, ringKey, tie)
+    local rank, on = {}, {}
+    for i, group in ipairs(FR.GroupList(ringKey)) do
+        rank[group.key] = i
+        on[group.key] = group.enabled
+    end
+    local kept = {}
+    for _, entry in ipairs(items) do
+        if on[entry.groupKey] ~= false then kept[#kept + 1] = entry end
+    end
+    table.sort(kept, function(a, b)
+        local ra, rb = rank[a.groupKey] or 99, rank[b.groupKey] or 99
+        if ra ~= rb then return ra < rb end
+        return tie(a, b)
+    end)
+    return kept, #items
+end
+
+local function EmptyText(kept, total, none)
+    if total > 0 and #kept == 0 then return "Every kind is turned off (Kinds and order)" end
+    return none
 end
 
 ---------------------------------------------------------------------------
@@ -108,15 +191,14 @@ local function BuildConsumables()
             items[#items + 1] = entry
         end
     end)
-    table.sort(items, function(a, b)
-        if a.order ~= b.order then return a.order < b.order end
-        if a.group ~= b.group then return a.group < b.group end -- (food before drink in "Food & drink")
+    local kept, total = Arrange(items, "consumables", function(a, b)
+        if a.group ~= b.group then return a.group < b.group end -- (food before "Food & drink" ones)
         if a.minLevel ~= b.minLevel then return a.minLevel > b.minLevel end
         if a.itemLevel ~= b.itemLevel then return a.itemLevel > b.itemLevel end
         return a.label < b.label
     end)
-    Cap(items).empty = "No consumables in your bags"
-    return items
+    Cap(kept).empty = EmptyText(kept, total, "No consumables in your bags")
+    return kept
 end
 
 ---------------------------------------------------------------------------
@@ -143,11 +225,10 @@ local function BuildQuestItems()
             starts[#starts + 1] = MakeEntry(itemID, icon, "queststart")
         end
     end)
-    table.sort(use, ByLabel)
-    table.sort(starts, ByLabel)
     for _, entry in ipairs(starts) do use[#use + 1] = entry end
-    Cap(use).empty = "No quest items in your bags"
-    return use
+    local kept, total = Arrange(use, "quest", ByLabel)
+    Cap(kept).empty = EmptyText(kept, total, "No quest items in your bags")
+    return kept
 end
 
 FR.Builders = {
