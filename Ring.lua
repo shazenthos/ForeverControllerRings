@@ -540,6 +540,11 @@ selected:SetFont(FONT, 14, "")
 selected:SetMaxLines(2)
 selected:SetJustifyH("CENTER")
 selected:SetShadowOffset(1, -1)
+local groupText = ring:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+groupText:SetPoint("CENTER", ring, "CENTER", 0, -32)
+groupText:SetWidth(150)
+groupText:SetFont(FONT, 10, "")
+groupText:SetJustifyH("CENTER")
 local hint = ring:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 hint:SetPoint("CENTER", ring, "CENTER", 0, -64)
 hint:SetWidth(130)
@@ -589,18 +594,6 @@ for index = 1, PER_PAGE do
     slots[index] = slot
 end
 
--- Rim colour from the item's quality (steel for plain white and grey ones).
-local function QualityColor(itemID)
-    local ok, r, g, b = pcall(function()
-        local quality = C_Item.GetItemQualityByID(itemID)
-        if quality and quality >= 2 then
-            return C_Item.GetItemQualityColor(quality)
-        end
-    end)
-    if ok and r then return { r, g, b } end
-    return STEEL
-end
-
 local drawn
 
 -- (item counts and cooldowns may be secret values in combat: skip then)
@@ -636,7 +629,7 @@ local function Draw(key)
         if entry then
             slot.icon:SetTexture(entry.icon)
             slot.name:SetText(entry.label or "")
-            local color = QualityColor(entry.itemID)
+            local color = entry.color or STEEL
             slot.rim:SetVertexColor(color[1], color[2], color[3], 1)
             slot:Show()
             UpdateSlot(slot, entry)
@@ -692,8 +685,12 @@ driver:SetScript("OnUpdate", function(_, elapsed)
     end
     if pick and slots[pick] and entries[pick] then
         selected:SetText(entries[pick].label)
+        local color = entries[pick].color or STEEL
+        groupText:SetTextColor(color[1], color[2], color[3])
+        groupText:SetText(entries[pick].group or "")
     elseif #entries > 0 then
         selected:SetText("")
+        groupText:SetText("")
     end
     acc = acc + elapsed
     if acc > 0.25 then

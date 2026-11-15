@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.0
+- Items are now sorted and colour-coded by kind. Consumables go round the ring in a fixed order: Food (orange), Drink (blue), Potion (red), Bandage (cream), Elixir / Flask (green), Scroll (gold), Other (violet); inside each kind the best (highest required level) comes first. Quest items: ones you use (teal), then ones that start a quest (gold). The rim of each slot has its kind's colour and the kind is named in the middle of the ring.
+
 ## 0.3.2
 - Fix the "blocked from an action only available to the Blizzard UI" popup when closing the ring or choosing an item: the calls that stop a walk (added in 0.2.3) are blocked to addons, even from a pcall. They are gone. The left stick now does nothing while the ring is open (it used to be bound to the movement commands, which left the character running if the ring closed with the stick held).
 - The ring is bigger (520 instead of 400): larger icons, wider room for item names, and a roomier centre.
