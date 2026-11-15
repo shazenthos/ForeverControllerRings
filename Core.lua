@@ -54,6 +54,7 @@ local function Help()
     FR.Print("/fcr release on|off         use a slot when the stick is let go")
     FR.Print("/fcr rebuild                refill the rings from your bags")
     FR.Print("/fcr probe                  check which APIs this client has")
+    FR.Print("/fcr debug [off]             print every stick key event of an open ring")
 end
 
 SLASH_FCR1 = "/fcr"
@@ -84,6 +85,9 @@ SlashCmdList["FCR"] = function(msg)
         FR.Print("rings rebuilt")
     elseif cmd == "probe" then
         FR.Probe()
+    elseif cmd == "debug" then
+        FR.debug = (args[2] ~= "off")
+        FR.Print("debug " .. (FR.debug and "on: every stick key event is printed" or "off"))
     elseif cmd == "help" then
         Help()
     else

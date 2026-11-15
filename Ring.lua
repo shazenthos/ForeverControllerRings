@@ -126,6 +126,25 @@ ring:SetAttribute("fr-pickslot", [=[
     return best
 ]=])
 
+-- The slot the right stick's direction KEYS that are down point at (for a
+-- flick too quick for the pad state to still show it): up/down/left/right
+-- added together, so two keys make a diagonal.
+ring:SetAttribute("fr-pickkeys", [=[
+    local x, y = 0, 0
+    if self:GetAttribute("fr-held-PADRSTICKUP") then y = y + 1 end
+    if self:GetAttribute("fr-held-PADRSTICKDOWN") then y = y - 1 end
+    if self:GetAttribute("fr-held-PADRSTICKLEFT") then x = x - 1 end
+    if self:GetAttribute("fr-held-PADRSTICKRIGHT") then x = x + 1 end
+    if x == 0 and y == 0 then return nil end
+    local key = self:GetAttribute("fr-active")
+    local best, bestDot
+    for index = 1, self:GetAttribute(key .. "-count") or 0 do
+        local dot = x * self:GetAttribute(key .. "-dx-" .. index) + y * self:GetAttribute(key .. "-dy-" .. index)
+        if not bestDot or dot > bestDot then best, bestDot = index, dot end
+    end
+    return best
+]=])
+
 -- Take the ring's keys. One still held (the button that opened the ring,
 -- say) is taken only once let go: its release must reach the binding it
 -- was pressed on, or the game's own binding stays down.
@@ -209,10 +228,18 @@ SecureHandlerWrapScript(aim, "OnClick", aim, Fill([=[
     self:SetAttribute("type", nil)
     local ring = self:GetFrameRef("ring")
     if ring:GetAttribute("fr-waiting") then ring:RunAttribute("fr-take") end
+    -- which direction keys are down right now (the button is the key's name)
+    ring:SetAttribute("fr-held-" .. button, down and 1 or nil)
     if ring:IsShown() then
         local pick = ring:RunAttribute("fr-pickslot", down and 0.12 or 0.5)
+        -- a quick flick: by the time this runs the stick may already be back
+        -- near the middle, so go by the direction keys that went down
+        if not pick and down then pick = ring:RunAttribute("fr-pickkeys") end
         if pick then ring:SetAttribute("fr-sticky", pick) end
-        if not down and not pick and (ring:GetAttribute("fr-release") or 0) == 1 then
+        -- a diagonal is two keys; only the last one let go is the release
+        local held = ring:GetAttribute("fr-held-PADRSTICKUP") or ring:GetAttribute("fr-held-PADRSTICKDOWN")
+            or ring:GetAttribute("fr-held-PADRSTICKLEFT") or ring:GetAttribute("fr-held-PADRSTICKRIGHT")
+        if not down and not pick and not held and (ring:GetAttribute("fr-release") or 0) == 1 then
             pick = ring:GetAttribute("fr-sticky")
             if pick then
                 @FILL@
@@ -222,6 +249,14 @@ SecureHandlerWrapScript(aim, "OnClick", aim, Fill([=[
     end
     return false
 ]=], { FILL = FILL }))
+
+-- /fcr debug: say every aim key event (to see why a release did not use anything)
+aim:HookScript("OnClick", function(_, button, down)
+    if FR.debug then
+        FR.Print(("aim %s %s  sticky=%s  shown=%s  t=%.3f"):format(tostring(button), down and "down" or "up",
+            tostring(ring:GetAttribute("fr-sticky")), tostring(ring:IsShown()), GetTime()))
+    end
+end)
 
 -- A: use the slot the stick points at, else the sticky pick.
 local use = SecureButton("ForeverControllerRingsUse")
@@ -287,6 +322,9 @@ SecureHandlerWrapScript(close, "OnClick", close, [=[
 SecureHandlerWrapScript(ring, "OnShow", ring, Fill([=[
     local taken = newtable(@TAKENKEYS@)
     for _, key in ipairs(taken) do self:SetAttribute("fr-claimed-" .. key, nil) end
+    for _, key in ipairs(newtable("PADRSTICKUP", "PADRSTICKDOWN", "PADRSTICKLEFT", "PADRSTICKRIGHT")) do
+        self:SetAttribute("fr-held-" .. key, nil) -- (a stale "held" would block the release)
+    end
     self:RunAttribute("fr-take")
     for _, modifier in ipairs(@MODS@) do
         for _, key in ipairs(newtable("PADRSTICKUP", "PADRSTICKDOWN", "PADRSTICKLEFT", "PADRSTICKRIGHT")) do
