@@ -1,7 +1,7 @@
 ## Interface: 16001, 16002, 16003, 16100, 16101, 16200
 ## Title: Forever Controller Rings
 ## Notes: A consumables ring and a quest-items ring you map onto WoW Forever's gamepad bar like any spell.
-## Version: 0.2.2
+## Version: 0.2.3
 ## X-License: MIT
 ## X-Curse-Project-ID: 1802723
 ## SavedVariables: ForeverControllerRingsDB

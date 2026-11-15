@@ -351,6 +351,28 @@ end)
 ring:HookScript("OnHide", RestoreAxis)
 
 ---------------------------------------------------------------------------
+-- Stuck walking. While the ring is up the left stick's directions are bound
+-- to the movement commands (the ring holds the sticks, so the game's own
+-- movement does not see them). If the ring closes while one is still held,
+-- the binding goes away before its release arrives and the character keeps
+-- walking. So on close, stop every movement the left stick may have
+-- started (and once more a moment later, in case a late press got through).
+---------------------------------------------------------------------------
+local STOPS = { "MoveForwardStop", "MoveBackwardStop", "StrafeLeftStop", "StrafeRightStop" }
+local function StopWalking()
+    for _, name in ipairs(STOPS) do
+        local fn = _G[name]
+        if fn then pcall(fn) end
+    end
+end
+ring:HookScript("OnHide", function()
+    StopWalking()
+    C_Timer.After(0.15, function()
+        if not ring:IsShown() then StopWalking() end
+    end)
+end)
+
+---------------------------------------------------------------------------
 -- Settings and pad indexes (out of combat)
 ---------------------------------------------------------------------------
 local function StickIndex(name)

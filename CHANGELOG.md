@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.3
+- Fix: the character could keep walking in one direction after the ring closed with the left stick still pushed. The ring now stops every walk it may have started.
+
 ## 0.2.2
 - The ring now shows each item's name under its icon (two lines at most).
 
