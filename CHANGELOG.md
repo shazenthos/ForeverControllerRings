@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.2
+- The ring now shows each item's name under its icon (two lines at most).
+
 ## 0.2.1
 - Release pipeline test: first version published automatically from GitHub. No code changes.
 

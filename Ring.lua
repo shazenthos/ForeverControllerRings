@@ -14,6 +14,7 @@ local _, FR = ...
 
 local PER_PAGE, MAX_PAGES = 8, 3
 local SIZE, RADIUS, ICON = 400, 135, 46
+local NAME_W = 84 -- width of an item name under its icon
 local PICK_SQ = 0.25 -- the stick must be at least half way out (for visuals)
 local AXIS_CVAR = "GamePadStickAxisButtons"
 local MODS = { "", "SHIFT-", "CTRL-", "ALT-", "CTRL-SHIFT-", "ALT-SHIFT-", "CTRL-ALT-", "CTRL-ALT-SHIFT-" }
@@ -466,6 +467,13 @@ for index = 1, PER_PAGE do
     slot.icon:SetAllPoints()
     slot.count = slot:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
     slot.count:SetPoint("BOTTOMRIGHT", -2, 2)
+    -- the item's name, under its icon (two lines at most)
+    slot.name = slot:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    slot.name:SetPoint("TOP", slot, "BOTTOM", 0, -2)
+    slot.name:SetWidth(NAME_W)
+    slot.name:SetMaxLines(2)
+    slot.name:SetJustifyH("CENTER")
+    slot.name:SetJustifyV("TOP")
     slot.cooldown = CreateFrame("Cooldown", nil, slot, "CooldownFrameTemplate")
     slot.cooldown:SetAllPoints()
     slot.cooldown:SetDrawEdge(false)
@@ -512,6 +520,7 @@ local function Draw(key)
         local entry = entries[index]
         if entry then
             slot.icon:SetTexture(entry.icon)
+            slot.name:SetText(entry.label or "")
             slot:Show()
             UpdateSlot(slot, entry)
         else
