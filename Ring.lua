@@ -398,6 +398,10 @@ ring:HookScript("OnHide", RestoreAxis)
 ---------------------------------------------------------------------------
 local STOPS = { "MoveForwardStop", "MoveBackwardStop", "StrafeLeftStop", "StrafeRightStop" }
 local function StopWalking()
+    -- (movement commands can be blocked in combat, and a blocked call raises the
+    -- "blocked from an action only available to the Blizzard UI" popup even
+    -- inside pcall, so they are only tried out of combat)
+    if InCombatLockdown() then return end
     for _, name in ipairs(STOPS) do
         local fn = _G[name]
         if fn then pcall(fn) end
@@ -566,6 +570,11 @@ for index = 1, PER_PAGE do
     -- a round rim (tinted by the item's quality) behind a round icon
     slot.rim = Disc(slot, "BACKGROUND", 0, ICON + 6, STEEL, 1)
     slot.rim:SetPoint("CENTER")
+    -- a golden halo for when it is the picked slot (made now, anchored now:
+    -- in combat it is only shown or hidden, never moved)
+    slot.halo = Disc(slot, "BACKGROUND", -1, ICON + 18, GOLD, 0.95)
+    slot.halo:SetPoint("CENTER")
+    slot.halo:Hide()
     slot.icon = slot:CreateTexture(nil, "ARTWORK")
     slot.icon:SetAllPoints()
     slot.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
@@ -592,11 +601,6 @@ for index = 1, PER_PAGE do
     end)
     slots[index] = slot
 end
-
--- A golden halo behind the picked slot (the slots, being child frames,
--- draw above it, so it shows as a glowing rim).
-local highlight = Disc(ring, "BACKGROUND", 6, ICON + 18, GOLD, 0.95)
-highlight:Hide()
 
 -- Rim colour from the item's quality (steel for plain white and grey ones).
 local function QualityColor(itemID)
@@ -684,9 +688,15 @@ driver:SetScript("OnUpdate", function(_, elapsed)
     if pick and not InCombatLockdown() and ring:GetAttribute("fr-sticky") ~= pick then
         pcall(ring.SetAttribute, ring, "fr-sticky", pick)
     end
-    for index, slot in ipairs(slots) do -- the picked slot grows a little and its name lights up
+    -- The picked slot gets a golden halo and a gold name. Only show/hide and
+    -- colour here: moving, sizing or scaling anything hung on the ring (a
+    -- protected frame) is blocked in combat and raises the "blocked from an
+    -- action only available to the Blizzard UI" popup.
+    local combat = InCombatLockdown()
+    for index, slot in ipairs(slots) do
         local on = (index == pick)
-        slot:SetScale(on and 1.14 or 1)
+        slot.halo:SetShown(on)
+        if not combat then slot:SetScale(on and 1.14 or 1) end -- (a small zoom, out of combat only)
         if on then
             slot.name:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
         else
@@ -694,13 +704,9 @@ driver:SetScript("OnUpdate", function(_, elapsed)
         end
     end
     if pick and slots[pick] and entries[pick] then
-        highlight:ClearAllPoints()
-        highlight:SetPoint("CENTER", slots[pick], "CENTER")
-        highlight:Show()
         selected:SetText(entries[pick].label)
-    else
-        highlight:Hide()
-        if #entries > 0 then selected:SetText("") end
+    elseif #entries > 0 then
+        selected:SetText("")
     end
     acc = acc + elapsed
     if acc > 0.25 then
